@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ビープ音テスト</title>
+    <link rel="stylesheet" href="reset.css">
+    <link rel="stylesheet" href="timer.css">
+</head>
+<body>
+    <header class="eva-header">
+        <div class="logo">
+            音声試験
+            <span class="sub">ビープ音動作確認</span>
+        </div>
+        <div class="status-bar">
+            <a href="index.html" class="nav-link">一覧</a>
+        </div>
+    </header>
+
+    <div class="eva-container" style="max-width:700px;">
+        <!-- カスタムビープ調整 -->
+        <div class="eva-panel">
+            <div class="panel-header">
+                <span class="panel-title">自由調整</span>
+                <span class="panel-id">パラメータ</span>
+            </div>
+            <div class="panel-body">
+                <div class="eva-input-group">
+                    <label style="min-width:90px;">周波数</label>
+                    <input type="range" id="freq" min="200" max="4000" value="1000" step="10" oninput="updateVal('freqVal',this.value+'Hz')" style="flex:1;">
+                    <span id="freqVal" style="min-width:60px;text-align:right;color:var(--eva-green);font-family:var(--font-display);font-size:0.85rem;">1000Hz</span>
+                </div>
+                <div class="eva-input-group">
+                    <label style="min-width:90px;">持続時間</label>
+                    <input type="range" id="dur" min="0.05" max="2.0" value="0.2" step="0.05" oninput="updateVal('durVal',this.value+'秒')" style="flex:1;">
+                    <span id="durVal" style="min-width:60px;text-align:right;color:var(--eva-green);font-family:var(--font-display);font-size:0.85rem;">0.2秒</span>
+                </div>
+                <div class="eva-input-group">
+                    <label style="min-width:90px;">音量</label>
+                    <input type="range" id="vol" min="0.05" max="1.0" value="0.6" step="0.05" oninput="updateVal('volVal',(this.value*100|0)+'%')" style="flex:1;">
+                    <span id="volVal" style="min-width:60px;text-align:right;color:var(--eva-green);font-family:var(--font-display);font-size:0.85rem;">60%</span>
+                </div>
+                <div class="eva-input-group">
+                    <label style="min-width:90px;">波形</label>
+                    <select id="wave" class="eva-select" style="flex:1;">
+                        <option value="sine">正弦波 (sine)</option>
+                        <option value="square">矩形波 (square)</option>
+                        <option value="sawtooth">鋸歯波 (sawtooth)</option>
+                        <option value="triangle">三角波 (triangle)</option>
+                    </select>
+                </div>
+                <div class="btn-group" style="margin-top:8px;">
+                    <button class="eva-btn btn-start" onclick="playCustomBeep()" style="flex:1;">再生</button>
+                    <button class="eva-btn btn-orange" onclick="playCustomDouble()" style="flex:1;">二連再生</button>
+                </div>
+
+                <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1);">
+                    <div class="eva-input-group">
+                        <label style="min-width:90px;">二連間隔</label>
+                        <input type="range" id="gap" min="50" max="500" value="250" step="10" oninput="updateVal('gapVal',this.value+'ms')" style="flex:1;">
+                        <span id="gapVal" style="min-width:60px;text-align:right;color:var(--eva-green);font-family:var(--font-display);font-size:0.85rem;">250ms</span>
+                    </div>
+                </div>
+
+                <div style="margin-top:12px;padding:10px;background:rgba(0,0,0,0.3);border:1px solid var(--eva-gray);font-size:0.7rem;color:var(--eva-text-dim);font-family:var(--font-display);letter-spacing:1px;" id="codePreview">
+                    _beep(1000, 0.2, 'sine', 0.6)
+                </div>
+            </div>
+        </div>
+
+        <!-- 内蔵音パターン -->
+        <div class="eva-panel">
+            <div class="panel-header">
+                <span class="panel-title">内蔵音パターン</span>
+                <span class="panel-id">3種</span>
+            </div>
+            <div class="panel-body">
+                <div style="display:flex;flex-direction:column;gap:16px;">
+                    <div style="display:flex;align-items:center;gap:16px;">
+                        <button class="eva-btn btn-start" onclick="play('pi')" style="min-width:160px;">ぴ（単音）</button>
+                        <span style="font-size:0.75rem;color:var(--eva-text-dim);">1000Hz / 0.2秒</span>
+                        <button class="eva-btn btn-remove" onclick="applyPreset(1000,0.2,'sine',0.6)">値を取込</button>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:16px;">
+                        <button class="eva-btn btn-orange" onclick="play('pipi')" style="min-width:160px;">ぴぴ（二連）</button>
+                        <span style="font-size:0.75rem;color:var(--eva-text-dim);">1000Hz × 2 / 間隔250ms</span>
+                        <button class="eva-btn btn-remove" onclick="applyPreset(1000,0.15,'sine',0.6,250)">値を取込</button>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:16px;">
+                        <button class="eva-btn btn-stop" onclick="play('pii')" style="min-width:160px;">ぴー（長音）</button>
+                        <span style="font-size:0.75rem;color:var(--eva-text-dim);">880Hz / 1.0秒</span>
+                        <button class="eva-btn btn-remove" onclick="applyPreset(880,1.0,'sine',0.6)">値を取込</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 独自音声 -->
+        <div class="eva-panel">
+            <div class="panel-header">
+                <span class="panel-title">独自音声</span>
+                <span class="panel-id">WAV / MP3</span>
+            </div>
+            <div class="panel-body">
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <label class="sound-file-label">
+                        音声選択
+                        <input type="file" id="customFile" accept=".wav,.mp3,audio/wav,audio/mpeg" onchange="loadFile(this)">
+                    </label>
+                    <span class="sound-file-name" id="fileName"></span>
+                </div>
+                <div style="margin-top:12px;">
+                    <button class="eva-btn btn-start" onclick="play('custom')" id="btnCustom" disabled>独自音声再生</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- playAlarm テスト -->
+        <div class="eva-panel">
+            <div class="panel-header">
+                <span class="panel-title">playAlarm 連動確認</span>
+                <span class="panel-id">総合</span>
+            </div>
+            <div class="panel-body">
+                <div class="eva-input-group">
+                    <label>音種</label>
+                    <select id="alarmType" class="eva-select" style="flex:1;">
+                        <option value="pi">ぴ（単音）</option>
+                        <option value="pipi">ぴぴ（二連）</option>
+                        <option value="pii">ぴー（長音）</option>
+                        <option value="custom">独自音声</option>
+                    </select>
+                </div>
+                <button class="eva-btn btn-add" onclick="testAlarm()" style="width:100%;margin-top:8px;">playAlarm() 実行</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="eva-footer">
+        音声試験系統 &mdash; ビープ音確認用
+    </footer>
+
+    <script src="timer.js"></script>
+    <script>
+        const sound = new SoundManager();
+
+        function updateVal(id, text) {
+            document.getElementById(id).textContent = text;
+            updateCodePreview();
+        }
+
+        function getParams() {
+            return {
+                freq: parseFloat(document.getElementById('freq').value),
+                dur:  parseFloat(document.getElementById('dur').value),
+                vol:  parseFloat(document.getElementById('vol').value),
+                wave: document.getElementById('wave').value,
+                gap:  parseInt(document.getElementById('gap').value)
+            };
+        }
+
+        function updateCodePreview() {
+            const p = getParams();
+            document.getElementById('codePreview').textContent =
+                `_beep(${p.freq}, ${p.dur}, '${p.wave}', ${p.vol})`;
+        }
+
+        function playCustomBeep() {
+            const p = getParams();
+            sound._beep(p.freq, p.dur, p.wave, p.vol);
+        }
+
+        function playCustomDouble() {
+            const p = getParams();
+            sound._beep(p.freq, p.dur, p.wave, p.vol);
+            setTimeout(() => sound._beep(p.freq, p.dur, p.wave, p.vol), p.gap);
+        }
+
+        function applyPreset(freq, dur, wave, vol, gap) {
+            document.getElementById('freq').value = freq;
+            document.getElementById('dur').value = dur;
+            document.getElementById('vol').value = vol;
+            document.getElementById('wave').value = wave;
+            updateVal('freqVal', freq + 'Hz');
+            updateVal('durVal', dur + '秒');
+            updateVal('volVal', (vol * 100 | 0) + '%');
+            if (gap !== undefined) {
+                document.getElementById('gap').value = gap;
+                updateVal('gapVal', gap + 'ms');
+            }
+            updateCodePreview();
+        }
+
+        function play(type) {
+            sound.setSoundType(type);
+            sound.preview();
+        }
+
+        function loadFile(input) {
+            if (input.files.length > 0) {
+                sound.loadCustomFile(input.files[0]);
+                document.getElementById('fileName').textContent = input.files[0].name;
+                document.getElementById('btnCustom').disabled = false;
+            }
+        }
+
+        function testAlarm() {
+            const type = document.getElementById('alarmType').value;
+            sound.setSoundType(type);
+            sound.playAlarm();
+        }
+    </script>
+</body>
+</html>

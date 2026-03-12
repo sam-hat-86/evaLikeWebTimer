@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>試験時計 - 時計管制系統</title>
+    <link rel="stylesheet" href="reset.css">
+    <link rel="stylesheet" href="timer.css">
+    <style>
+        .exam-schedule-row {
+            display: grid;
+            grid-template-columns: 2fr 130px 130px auto auto;
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .exam-schedule-row:hover {
+            background: rgba(255,102,0,0.05);
+        }
+        .exam-current-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .exam-info-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--eva-gray);
+            padding: 8px 12px;
+            text-align: center;
+        }
+        .exam-info-box .info-label {
+            font-size: 0.65rem;
+            color: var(--eva-orange);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .exam-info-box .info-value {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            color: var(--eva-green);
+            margin-top: 2px;
+        }
+        .exam-timeline {
+            display: flex;
+            width: 100%;
+            height: 24px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--eva-gray);
+            margin: 12px 0;
+            overflow: hidden;
+        }
+        .exam-timeline-segment {
+            height: 100%;
+            position: relative;
+            transition: opacity 0.3s;
+        }
+        .exam-timeline-segment.past { opacity: 0.3; }
+        .exam-timeline-segment.current { opacity: 1; }
+        .exam-timeline-segment.future { opacity: 0.6; }
+        .exam-timeline-marker {
+            position: absolute;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: var(--eva-white);
+            z-index: 2;
+            transition: left 0.5s linear;
+        }
+        @media (max-width: 768px) {
+            .exam-schedule-row {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
+            .exam-current-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="eva-header">
+        <div class="logo">
+            試験時計
+            <span class="sub">試験予定管理</span>
+        </div>
+        <div class="status-bar">
+            <span class="status-indicator"></span>
+            <span id="clock">00:00:00</span>
+            <a href="index.html" class="nav-link">一覧</a>
+        </div>
+    </header>
+
+    <div class="eva-container">
+        <div class="two-column">
+            <!-- 左: タイマー表示 -->
+            <div class="col-main">
+                <!-- メインタイマー表示 -->
+                <div class="eva-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">試験運用</span>
+                        <span class="panel-id" id="examStatus">待機中</span>
+                    </div>
+                    <div class="panel-body">
+                        <div id="currentExamTitle" style="text-align:center;font-family:var(--font-display);font-size:1.3rem;color:var(--eva-orange);letter-spacing:3px;margin-bottom:12px;">
+                            --- 予定待機中 ---
+                        </div>
+
+                        <div class="exam-current-info">
+                            <div class="exam-info-box">
+                                <div class="info-label">開始時刻</div>
+                                <div class="info-value" id="currentStart">--:--</div>
+                            </div>
+                            <div class="exam-info-box">
+                                <div class="info-label">終了時刻</div>
+                                <div class="info-value" id="currentEnd">--:--</div>
+                            </div>
+                        </div>
+
+                        <div class="timer-display" id="mainDisplay">00:00:00</div>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="mainProgress"></div>
+                        </div>
+
+                        <div id="examTimeline" class="exam-timeline" style="display:none;"></div>
+
+                        <div style="text-align:center;margin-top:8px;font-size:0.75rem;color:var(--eva-text-dim);">
+                            試験 <span id="currentExamNum">0</span> / <span id="totalExams">0</span>
+                        </div>
+
+                        <div class="btn-group" style="justify-content:center;">
+                            <button class="eva-btn btn-start" onclick="startExamSchedule()">予定開始</button>
+                            <button class="eva-btn btn-reset" onclick="resetExamSchedule()">初期化</button>
+                        </div>
+                        <div style="text-align:center;margin-top:10px;">
+                            <div class="mute-toggle" id="globalMute" onclick="toggleGlobalMute()" style="display:inline-flex;">
+                                <span class="mute-icon">🔊</span>
+                                <span>音声</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- スケジュール一覧 -->
+                <div class="eva-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">予定一覧</span>
+                        <span class="panel-id">時間割</span>
+                    </div>
+                    <div class="panel-body">
+                        <div id="scheduleList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右: 登録フォーム -->
+            <div class="col-side">
+                <div class="eva-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">試験予定</span>
+                        <span class="panel-id">登録</span>
+                    </div>
+                    <div class="panel-body">
+                        <div id="scheduleEntries">
+                            <!-- 動的に追加 -->
+                        </div>
+                        <div class="btn-group">
+                            <button class="eva-btn btn-add" onclick="addScheduleEntry()" style="width:100%;">試験追加</button>
+                        </div>
+                        <div class="sound-select-group" style="margin-top:12px;">
+                            <label>終了音</label>
+                            <div class="sound-select-row">
+                                <select id="soundType" class="eva-select" onchange="onSoundTypeChange()">
+                                    <option value="pi">ぴ（単音）</option>
+                                    <option value="pipi">ぴぴ（二連）</option>
+                                    <option value="pii">ぴー（長音）</option>
+                                    <option value="custom">独自音声</option>
+                                </select>
+                                <button class="eva-btn btn-preview" type="button" onclick="previewSound()">試聴</button>
+                            </div>
+                            <div id="fileUploadArea" style="display:none;margin-top:6px;">
+                                <label class="sound-file-label">
+                                    音声選択 (WAV/MP3)
+                                    <input type="file" id="soundFile" accept=".wav,.mp3,audio/wav,audio/mpeg" onchange="onSoundFileSelected(this)">
+                                </label>
+                                <div class="sound-file-name" id="soundFileName"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="eva-footer">
+        試験時計系統 &mdash; 予定管理稼働中
+    </footer>
+
+    <script src="timer.js"></script>
+    <script>
+        startClock('clock');
+
+        const sound = new SoundManager();
+        let schedules = [];
+        let examRunning = false;
+        let examInterval = null;
+        let entryCount = 0;
+
+        function onSoundTypeChange() {
+            const type = document.getElementById('soundType').value;
+            document.getElementById('fileUploadArea').style.display = type === 'custom' ? 'block' : 'none';
+        }
+
+        function onSoundFileSelected(input) {
+            if (input.files.length > 0) {
+                sound.loadCustomFile(input.files[0]);
+                document.getElementById('soundFileName').textContent = input.files[0].name;
+            }
+        }
+
+        function previewSound() {
+            const type = document.getElementById('soundType').value;
+            if (type !== 'custom') sound.setSoundType(type);
+            sound.preview();
+        }
+
+        function applySoundType() {
+            const type = document.getElementById('soundType').value;
+            if (type !== 'custom') sound.setSoundType(type);
+        }
+
+        function addScheduleEntry() {
+            entryCount++;
+            const container = document.getElementById('scheduleEntries');
+            const row = document.createElement('div');
+            row.className = 'exam-schedule-row';
+            row.id = 'entry_' + entryCount;
+            row.innerHTML = `
+                <input type="text" class="eva-input eva-input-title" placeholder="科目名" data-field="title">
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <span style="font-size:0.7rem;color:var(--eva-orange);">開始</span>
+                    <input type="time" class="eva-input" style="width:110px;" data-field="start">
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <span style="font-size:0.7rem;color:var(--eva-orange);">終了</span>
+                    <input type="time" class="eva-input" style="width:110px;" data-field="end">
+                </div>
+                <div class="mute-toggle" onclick="toggleEntryMute(this)">
+                    <span class="mute-icon">🔊</span>
+                </div>
+                <button class="eva-btn btn-remove" onclick="removeEntry(${entryCount})">削除</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeEntry(id) {
+            if (examRunning) return;
+            const el = document.getElementById('entry_' + id);
+            if (el) el.remove();
+        }
+
+        function toggleEntryMute(el) {
+            el.classList.toggle('muted');
+            const icon = el.querySelector('.mute-icon');
+            icon.textContent = el.classList.contains('muted') ? '🔇' : '🔊';
+        }
+
+        function collectSchedules() {
+            const rows = document.querySelectorAll('.exam-schedule-row');
+            const result = [];
+            rows.forEach(row => {
+                const title = row.querySelector('[data-field="title"]').value || '科目';
+                const startStr = row.querySelector('[data-field="start"]').value;
+                const endStr = row.querySelector('[data-field="end"]').value;
+                const muted = row.querySelector('.mute-toggle').classList.contains('muted');
+
+                if (!startStr || !endStr) return;
+
+                const today = new Date();
+                const [sh, sm] = startStr.split(':').map(Number);
+                const [eh, em] = endStr.split(':').map(Number);
+
+                const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), sh, sm, 0);
+                const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), eh, em, 0);
+
+                if (endDate <= startDate) return;
+
+                const durationSec = Math.floor((endDate - startDate) / 1000);
+
+                result.push({
+                    title,
+                    startTime: startDate,
+                    endTime: endDate,
+                    startStr,
+                    endStr,
+                    durationSec,
+                    muted,
+                    status: 'waiting'
+                });
+            });
+
+            result.sort((a, b) => a.startTime - b.startTime);
+            return result;
+        }
+
+        function startExamSchedule() {
+            if (examRunning) return;
+            schedules = collectSchedules();
+            if (schedules.length === 0) return;
+
+            examRunning = true;
+            applySoundType();
+            document.getElementById('totalExams').textContent = schedules.length;
+            document.getElementById('examStatus').textContent = '稼働中';
+
+            renderScheduleList();
+            buildTimeline();
+
+            examInterval = setInterval(tickExam, 1000);
+            tickExam();
+        }
+
+        function tickExam() {
+            const now = new Date();
+            let activeFound = false;
+
+            for (let i = 0; i < schedules.length; i++) {
+                const exam = schedules[i];
+
+                if (now >= exam.endTime && exam.status !== 'finished') {
+                    if (exam.status === 'active') {
+                        exam.status = 'finished';
+                        if (!exam.muted) sound.playAlarm();
+                    } else {
+                        exam.status = 'finished';
+                    }
+                } else if (now >= exam.startTime && now < exam.endTime) {
+                    if (exam.status === 'waiting') {
+                        exam.status = 'active';
+                        if (!exam.muted) sound.playAlarm();
+                    }
+                    if (!activeFound) {
+                        activeFound = true;
+                        showActiveExam(exam, i, now);
+                    }
+                }
+            }
+
+            if (!activeFound) {
+                const nextExam = schedules.find(e => e.status === 'waiting');
+                if (nextExam) {
+                    const idx = schedules.indexOf(nextExam);
+                    showWaitingExam(nextExam, idx, now);
+                } else if (schedules.every(e => e.status === 'finished')) {
+                    finishAllExams();
+                }
+            }
+
+            renderScheduleList();
+            updateTimeline(now);
+        }
+
+        function showActiveExam(exam, index, now) {
+            const remaining = Math.max(0, Math.floor((exam.endTime - now) / 1000));
+            const total = exam.durationSec;
+            const displayEl = document.getElementById('mainDisplay');
+            const progressEl = document.getElementById('mainProgress');
+
+            document.getElementById('currentExamTitle').textContent = exam.title;
+            document.getElementById('currentExamNum').textContent = index + 1;
+            document.getElementById('currentStart').textContent = exam.startStr;
+            document.getElementById('currentEnd').textContent = exam.endStr;
+
+            displayEl.textContent = formatTimeAlwaysFull(remaining);
+            updateTimerDisplayClass(displayEl, remaining, total);
+            updateProgressBar(progressEl, remaining, total);
+
+
+        }
+
+        function showWaitingExam(exam, index, now) {
+            const untilStart = Math.max(0, Math.floor((exam.startTime - now) / 1000));
+            const displayEl = document.getElementById('mainDisplay');
+
+            document.getElementById('currentExamTitle').textContent = '次: ' + exam.title + ' まで';
+            document.getElementById('currentExamNum').textContent = index + 1;
+            document.getElementById('currentStart').textContent = exam.startStr;
+            document.getElementById('currentEnd').textContent = exam.endStr;
+            document.getElementById('examStatus').textContent = '待機中';
+
+            displayEl.textContent = formatTimeAlwaysFull(untilStart);
+            displayEl.classList.remove('warning', 'danger', 'finished');
+            document.getElementById('mainProgress').style.width = '100%';
+            document.getElementById('mainProgress').classList.remove('warning', 'danger');
+        }
+
+        function finishAllExams() {
+            examRunning = false;
+            clearInterval(examInterval);
+            document.getElementById('currentExamTitle').textContent = '--- 全試験完了 ---';
+            document.getElementById('examStatus').textContent = '完了';
+            document.getElementById('mainDisplay').textContent = '00:00:00';
+            document.getElementById('mainDisplay').classList.add('finished');
+            sound.playAlarm();
+        }
+
+        function resetExamSchedule() {
+            examRunning = false;
+            clearInterval(examInterval);
+            schedules = [];
+            document.getElementById('currentExamTitle').textContent = '--- 予定待機中 ---';
+            document.getElementById('examStatus').textContent = '待機中';
+            document.getElementById('mainDisplay').textContent = '00:00:00';
+            document.getElementById('mainDisplay').classList.remove('warning', 'danger', 'finished');
+            document.getElementById('mainProgress').style.width = '100%';
+            document.getElementById('mainProgress').classList.remove('warning', 'danger');
+            document.getElementById('currentExamNum').textContent = '0';
+            document.getElementById('totalExams').textContent = '0';
+            document.getElementById('currentStart').textContent = '--:--';
+            document.getElementById('currentEnd').textContent = '--:--';
+            document.getElementById('scheduleList').innerHTML = '';
+            document.getElementById('examTimeline').style.display = 'none';
+        }
+
+        function renderScheduleList() {
+            const container = document.getElementById('scheduleList');
+            container.innerHTML = '';
+            schedules.forEach((exam, i) => {
+                const card = document.createElement('div');
+                let cls = 'timer-card';
+                if (exam.status === 'active') cls += ' active';
+                if (exam.status === 'finished') cls += ' completed-card';
+                card.className = cls;
+                const statusText = exam.status === 'active' ? '実施中' :
+                                   exam.status === 'finished' ? '終了' : '待機中';
+                const statusColor = exam.status === 'active' ? 'var(--eva-green)' :
+                                    exam.status === 'finished' ? 'var(--eva-gray)' : 'var(--eva-yellow)';
+                card.innerHTML = `
+                    <div class="timer-card-header">
+                        <span class="panel-title">${escapeHtml(exam.title)}</span>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <span style="font-size:0.7rem;color:var(--eva-text-dim);">${exam.startStr} - ${exam.endStr}</span>
+                            <span style="font-size:0.7rem;color:${statusColor};font-weight:bold;">${statusText}</span>
+                            <span style="font-size:0.7rem;color:var(--eva-text-dim);">${exam.muted ? '🔇' : '🔊'}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function buildTimeline() {
+            if (schedules.length === 0) return;
+            const timeline = document.getElementById('examTimeline');
+            timeline.style.display = 'flex';
+            timeline.innerHTML = '';
+
+            const firstStart = schedules[0].startTime.getTime();
+            const lastEnd = schedules[schedules.length - 1].endTime.getTime();
+            const totalSpan = lastEnd - firstStart;
+
+            schedules.forEach((exam, i) => {
+                // gap before this exam
+                const prevEnd = i === 0 ? firstStart : schedules[i - 1].endTime.getTime();
+                const gapMs = exam.startTime.getTime() - prevEnd;
+                if (gapMs > 0) {
+                    const gapSeg = document.createElement('div');
+                    gapSeg.className = 'exam-timeline-segment';
+                    gapSeg.style.width = (gapMs / totalSpan * 100) + '%';
+                    gapSeg.style.background = 'rgba(255,255,255,0.05)';
+                    timeline.appendChild(gapSeg);
+                }
+
+                const seg = document.createElement('div');
+                seg.className = 'exam-timeline-segment future';
+                seg.id = 'timeline_' + i;
+                const duration = exam.endTime.getTime() - exam.startTime.getTime();
+                seg.style.width = (duration / totalSpan * 100) + '%';
+                const colors = ['#e94560', '#ff6600', '#0077ff', '#7b2d8e', '#00ff41', '#ffcc00'];
+                seg.style.background = colors[i % colors.length];
+                seg.title = exam.title;
+                timeline.appendChild(seg);
+            });
+        }
+
+        function updateTimeline(now) {
+            schedules.forEach((exam, i) => {
+                const seg = document.getElementById('timeline_' + i);
+                if (!seg) return;
+                seg.classList.remove('past', 'current', 'future');
+                if (exam.status === 'finished') seg.classList.add('past');
+                else if (exam.status === 'active') seg.classList.add('current');
+                else seg.classList.add('future');
+            });
+        }
+
+        function toggleGlobalMute() {
+            const muted = sound.toggleMute();
+            const el = document.getElementById('globalMute');
+            if (muted) {
+                el.classList.add('muted');
+                el.querySelector('.mute-icon').textContent = '🔇';
+                el.querySelector('span:last-child').textContent = '消音';
+            } else {
+                el.classList.remove('muted');
+                el.querySelector('.mute-icon').textContent = '🔊';
+                el.querySelector('span:last-child').textContent = '音声';
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // 初期エントリを1つ追加
+        addScheduleEntry();
+    </script>
+</body>
+</html>

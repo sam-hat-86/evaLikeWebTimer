@@ -1,0 +1,775 @@
+/* ===================================
+   EVANGELION STYLE TIMER - COMMON CSS
+   =================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&family=Orbitron:wght@400;700;900&display=swap');
+
+:root {
+    --eva-black: #0a0a0a;
+    --eva-dark: #1a1a2e;
+    --eva-panel: #16213e;
+    --eva-border: #e94560;
+    --eva-orange: #ff6600;
+    --eva-orange-dim: #cc5200;
+    --eva-green: #00ff41;
+    --eva-green-dim: #00cc33;
+    --eva-red: #ff0040;
+    --eva-red-dim: #cc0033;
+    --eva-yellow: #ffcc00;
+    --eva-blue: #0077ff;
+    --eva-purple: #7b2d8e;
+    --eva-white: #e0e0e0;
+    --eva-gray: #555;
+    --eva-text: #f0f0f0;
+    --eva-text-dim: #888;
+    --font-mono: 'Noto Serif JP', serif;
+    --font-display: 'Orbitron', 'Noto Serif JP', serif;
+}
+
+body {
+    background-color: var(--eva-black);
+    color: var(--eva-text);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* スキャンライン効果 */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.08) 2px,
+        rgba(0, 0, 0, 0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* ===== ヘッダー ===== */
+.eva-header {
+    background: linear-gradient(180deg, var(--eva-dark), var(--eva-black));
+    border-bottom: 2px solid var(--eva-orange);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.eva-header::before {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--eva-orange), transparent);
+    animation: headerGlow 3s ease-in-out infinite;
+}
+
+@keyframes headerGlow {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.eva-header .logo {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--eva-orange);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+}
+
+.eva-header .logo .sub {
+    font-size: 0.65rem;
+    color: var(--eva-text-dim);
+    letter-spacing: 2px;
+    display: block;
+    margin-top: -2px;
+}
+
+.eva-header .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.75rem;
+    color: var(--eva-green);
+}
+
+.eva-header .status-indicator {
+    width: 8px;
+    height: 8px;
+    background: var(--eva-green);
+    border-radius: 50%;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.nav-link {
+    color: var(--eva-orange);
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    padding: 4px 12px;
+    border: 1px solid var(--eva-orange-dim);
+    transition: all 0.3s;
+}
+
+.nav-link:hover {
+    background: var(--eva-orange);
+    color: var(--eva-black);
+}
+
+/* ===== メインコンテナ ===== */
+.eva-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* ===== パネル ===== */
+.eva-panel {
+    background: var(--eva-panel);
+    border: 1px solid var(--eva-border);
+    position: relative;
+    margin-bottom: 16px;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+
+.eva-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--eva-orange), var(--eva-red), var(--eva-orange));
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(233, 69, 96, 0.1);
+    border-bottom: 1px solid rgba(233, 69, 96, 0.3);
+}
+
+.panel-header .panel-title {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--eva-orange);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.panel-header .panel-id {
+    font-size: 0.7rem;
+    color: var(--eva-text-dim);
+    letter-spacing: 1px;
+}
+
+.panel-body {
+    padding: 16px;
+}
+
+/* ===== タイマー表示 ===== */
+.timer-display {
+    font-family: var(--font-display);
+    font-size: 4rem;
+    font-weight: 900;
+    text-align: center;
+    color: var(--eva-green);
+    text-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 255, 65, 0.2);
+    letter-spacing: 4px;
+    position: relative;
+    user-select: none;
+}
+
+.timer-display.warning {
+    color: var(--eva-yellow);
+    text-shadow: 0 0 20px rgba(255, 204, 0, 0.5);
+    border-color: rgba(255, 204, 0, 0.3);
+}
+
+.timer-display.danger {
+    color: var(--eva-red);
+    text-shadow: 0 0 20px rgba(255, 0, 64, 0.5);
+    border-color: rgba(255, 0, 64, 0.3);
+    animation: dangerPulse 1s infinite;
+}
+
+.timer-display.finished {
+    color: var(--eva-red);
+    animation: finishedFlash 0.5s infinite;
+}
+
+@keyframes dangerPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes finishedFlash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* ===== プログレスバー ===== */
+.progress-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--eva-gray);
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--eva-green), var(--eva-green-dim));
+    transition: width 0.5s linear;
+    width: 100%;
+}
+
+.progress-bar.warning {
+    background: linear-gradient(90deg, var(--eva-yellow), var(--eva-orange));
+}
+
+.progress-bar.danger {
+    background: linear-gradient(90deg, var(--eva-red), var(--eva-red-dim));
+}
+
+/* ===== 入力フィールド ===== */
+.eva-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.eva-input-group label {
+    font-size: 0.75rem;
+    color: var(--eva-orange);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    min-width: 80px;
+}
+
+.eva-input {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--eva-gray);
+    color: var(--eva-green);
+    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.eva-input:focus {
+    border-color: var(--eva-orange);
+    box-shadow: 0 0 8px rgba(255, 102, 0, 0.3);
+}
+
+.eva-input::placeholder {
+    color: var(--eva-text-dim);
+}
+
+.eva-input-sm {
+    width: 60px;
+    text-align: center;
+}
+
+.eva-input-title {
+    flex: 1;
+    min-width: 0;
+}
+
+.eva-select {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--eva-gray);
+    color: var(--eva-green);
+    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    outline: none;
+    cursor: pointer;
+}
+
+.eva-select:focus {
+    border-color: var(--eva-orange);
+}
+
+/* ===== ボタン ===== */
+.eva-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+.eva-btn:active {
+    transform: scale(0.96);
+}
+
+.btn-start {
+    background: rgba(0, 255, 65, 0.15);
+    border-color: var(--eva-green);
+    color: var(--eva-green);
+}
+
+.btn-start:hover {
+    background: var(--eva-green);
+    color: var(--eva-black);
+}
+
+.btn-stop {
+    background: rgba(255, 204, 0, 0.15);
+    border-color: var(--eva-yellow);
+    color: var(--eva-yellow);
+}
+
+.btn-stop:hover {
+    background: var(--eva-yellow);
+    color: var(--eva-black);
+}
+
+.btn-reset {
+    background: rgba(255, 0, 64, 0.15);
+    border-color: var(--eva-red);
+    color: var(--eva-red);
+}
+
+.btn-reset:hover {
+    background: var(--eva-red);
+    color: var(--eva-black);
+}
+
+.btn-add {
+    background: rgba(0, 119, 255, 0.15);
+    border-color: var(--eva-blue);
+    color: var(--eva-blue);
+}
+
+.btn-add:hover {
+    background: var(--eva-blue);
+    color: var(--eva-white);
+}
+
+.btn-remove {
+    background: rgba(255, 0, 64, 0.1);
+    border-color: var(--eva-red-dim);
+    color: var(--eva-red);
+    padding: 4px 10px;
+    font-size: 0.7rem;
+}
+
+.btn-remove:hover {
+    background: var(--eva-red);
+    color: var(--eva-white);
+}
+
+.btn-orange {
+    background: rgba(255, 102, 0, 0.15);
+    border-color: var(--eva-orange);
+    color: var(--eva-orange);
+}
+
+.btn-orange:hover {
+    background: var(--eva-orange);
+    color: var(--eva-black);
+}
+
+.btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+/* ===== 音声選択 ===== */
+.sound-select-group {
+    margin-bottom: 10px;
+}
+
+.sound-select-group label {
+    font-size: 0.75rem;
+    color: var(--eva-orange);
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.sound-select-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.sound-select-row .eva-select {
+    flex: 1;
+    min-width: 120px;
+}
+
+.btn-preview {
+    background: rgba(255, 102, 0, 0.15);
+    border-color: var(--eva-orange);
+    color: var(--eva-orange);
+    padding: 5px 10px;
+    font-size: 0.7rem;
+}
+
+.btn-preview:hover {
+    background: var(--eva-orange);
+    color: var(--eva-black);
+}
+
+.sound-file-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: rgba(0, 119, 255, 0.15);
+    border: 1px solid var(--eva-blue);
+    color: var(--eva-blue);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    clip-path: polygon(0 0, calc(100% - 4px) 0, 100% 4px, 100% 100%, 4px 100%, 0 calc(100% - 4px));
+}
+
+.sound-file-label:hover {
+    background: var(--eva-blue);
+    color: var(--eva-white);
+}
+
+.sound-file-label input[type="file"] {
+    display: none;
+}
+
+.sound-file-name {
+    font-size: 0.65rem;
+    color: var(--eva-text-dim);
+    margin-top: 4px;
+}
+
+/* ===== ミュートトグル ===== */
+.mute-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: var(--eva-text-dim);
+    transition: color 0.3s;
+}
+
+.mute-toggle:hover {
+    color: var(--eva-orange);
+}
+
+.mute-toggle .mute-icon {
+    font-size: 1.1rem;
+}
+
+.mute-toggle.muted {
+    color: var(--eva-red);
+}
+
+/* ===== タイマーカード ===== */
+.timer-card {
+    background: var(--eva-panel);
+    border: 1px solid var(--eva-border);
+    margin-bottom: 12px;
+    position: relative;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+
+.timer-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--eva-orange);
+}
+
+.timer-card.active {
+    border-color: var(--eva-green);
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+}
+
+.timer-card.active::before {
+    background: var(--eva-green);
+}
+
+.timer-card.completed-card {
+    opacity: 0.5;
+    border-color: var(--eva-gray);
+}
+
+.timer-card.completed-card::before {
+    background: var(--eva-gray);
+}
+
+.timer-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(233, 69, 96, 0.2);
+}
+
+.timer-card-body {
+    padding: 12px;
+}
+
+.timer-card .timer-display {
+    font-size: 2.5rem;
+}
+
+/* ===== ステータスバー ===== */
+.status-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--eva-text-dim);
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 8px;
+}
+
+/* ===== Index メニュー ===== */
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    padding: 40px 0;
+}
+
+.menu-card {
+    background: var(--eva-panel);
+    border: 1px solid var(--eva-border);
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+}
+
+.menu-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--eva-orange);
+    transition: background 0.3s;
+}
+
+.menu-card:hover {
+    border-color: var(--eva-green);
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.15);
+    transform: translateY(-4px);
+}
+
+.menu-card:hover::before {
+    background: var(--eva-green);
+}
+
+.menu-card .card-number {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--eva-orange);
+    opacity: 0.3;
+    line-height: 1;
+}
+
+.menu-card .card-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--eva-orange);
+    letter-spacing: 3px;
+    margin: 12px 0 8px;
+    text-transform: uppercase;
+}
+
+.menu-card .card-desc {
+    font-size: 0.8rem;
+    color: var(--eva-text-dim);
+    line-height: 1.6;
+}
+
+/* ===== 試験タイマー固有 ===== */
+.schedule-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.schedule-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.schedule-list::-webkit-scrollbar-thumb {
+    background: var(--eva-orange);
+}
+
+.schedule-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.schedule-item:hover {
+    background: rgba(255, 102, 0, 0.05);
+}
+
+/* ===== 全体コントロール ===== */
+.global-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--eva-gray);
+    margin-bottom: 20px;
+}
+
+/* ===== フッター ===== */
+.eva-footer {
+    text-align: center;
+    padding: 16px;
+    font-size: 0.65rem;
+    color: var(--eva-text-dim);
+    letter-spacing: 2px;
+    border-top: 1px solid rgba(233, 69, 96, 0.2);
+    margin-top: 40px;
+}
+
+/* ===== ヘキサゴンデコレーション ===== */
+.hex-decoration {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    opacity: 0.1;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.hex-decoration::before {
+    content: '⬡';
+    font-size: 60px;
+    color: var(--eva-orange);
+}
+
+/* ===== 2カラムレイアウト ===== */
+.two-column {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+    align-items: start;
+}
+
+.col-main {
+    min-width: 0;
+}
+
+.col-side {
+    min-width: 0;
+    position: sticky;
+    top: 24px;
+}
+
+/* ===== レスポンシブ ===== */
+@media (max-width: 960px) {
+    .two-column {
+        grid-template-columns: 1fr;
+    }
+
+    .col-side {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .eva-header {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+
+    .timer-display {
+        font-size: 2.5rem;
+    }
+
+    .timer-card .timer-display {
+        font-size: 1.8rem;
+    }
+
+    .eva-container {
+        padding: 12px;
+    }
+
+    .schedule-item {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .btn-group {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .timer-display {
+        font-size: 2rem;
+        letter-spacing: 2px;
+    }
+
+    .menu-grid {
+        grid-template-columns: 1fr;
+    }
+}

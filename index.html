@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>時計管制系統 - 一覧</title>
+    <link rel="stylesheet" href="reset.css">
+    <link rel="stylesheet" href="timer.css">
+</head>
+<body>
+    <header class="eva-header">
+        <div class="logo">
+            時計管制系統
+            <span class="sub">運用管理卓</span>
+        </div>
+        <div class="status-bar">
+            <span class="status-indicator"></span>
+            <span>稼働中</span>
+            <span id="clock">00:00:00</span>
+        </div>
+    </header>
+
+    <div class="eva-container">
+        <div class="menu-grid">
+            <a href="multi_timer.html" class="menu-card">
+                <div class="card-number">01</div>
+                <div class="card-title">複数時計</div>
+                <div class="card-desc">複数の時計を同時に起動・管理します。<br>それぞれ独立した減算が可能です。</div>
+            </a>
+            <a href="sequence_timer.html" class="menu-card">
+                <div class="card-number">02</div>
+                <div class="card-title">連続時計</div>
+                <div class="card-desc">登録した順番に時計を連続実行します。<br>工程管理に最適です。</div>
+            </a>
+            <a href="exam_timer.html" class="menu-card">
+                <div class="card-number">03</div>
+                <div class="card-title">試験時計</div>
+                <div class="card-desc">試験予定に基づいた時間管理を行います。<br>開始・終了時刻を設定して自動で減算します。</div>
+            </a>
+        </div>
+    </div>
+
+    <footer class="eva-footer">
+        時計管制系統 &mdash; 全系統正常
+    </footer>
+
+    <div class="hex-decoration"></div>
+
+    <script src="timer.js"></script>
+    <script>
+        startClock('clock');
+    </script>
+</body>
+</html>

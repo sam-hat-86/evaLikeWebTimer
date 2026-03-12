@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>複数時計 - 時計管制系統</title>
+    <link rel="stylesheet" href="reset.css">
+    <link rel="stylesheet" href="timer.css">
+</head>
+<body>
+    <header class="eva-header">
+        <div class="logo">
+            複数時計
+            <span class="sub">並列運用機能</span>
+        </div>
+        <div class="status-bar">
+            <span class="status-indicator"></span>
+            <span id="clock">00:00:00</span>
+            <a href="index.html" class="nav-link">一覧</a>
+        </div>
+    </header>
+
+    <div class="eva-container">
+        <div class="two-column">
+            <!-- 左: タイマー表示 -->
+            <div class="col-main">
+                <!-- 全体コントロール -->
+                <div class="global-controls">
+                    <button class="eva-btn btn-start" onclick="startAll()">全開始</button>
+                    <button class="eva-btn btn-stop" onclick="stopAll()">全停止</button>
+                    <button class="eva-btn btn-reset" onclick="resetAll()">全初期化</button>
+                </div>
+
+                <!-- タイマーリスト -->
+                <div id="timerList"></div>
+            </div>
+
+            <!-- 右: 登録フォーム -->
+            <div class="col-side">
+                <div class="eva-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">新規時計登録</span>
+                        <span class="panel-id">登録</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="eva-input-group">
+                            <label>名称</label>
+                            <input type="text" id="newTitle" class="eva-input eva-input-title" placeholder="時計名を入力">
+                        </div>
+                        <div class="eva-input-group">
+                            <label>時間</label>
+                            <input type="text" id="newHours" class="eva-input eva-input-sm" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="0" placeholder="H">
+                            <span style="color:var(--eva-orange)">:</span>
+                            <input type="text" id="newMinutes" class="eva-input eva-input-sm" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="5" placeholder="M">
+                            <span style="color:var(--eva-orange)">:</span>
+                            <input type="text" id="newSeconds" class="eva-input eva-input-sm" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="0" placeholder="S">
+                        </div>
+                        <div class="sound-select-group">
+                            <label>終了音</label>
+                            <div class="sound-select-row">
+                                <select id="newSoundType" class="eva-select" onchange="onSoundTypeChange()">
+                                    <option value="pi">ぴ（単音）</option>
+                                    <option value="pipi">ぴぴ（二連）</option>
+                                    <option value="pii">ぴー（長音）</option>
+                                    <option value="custom">独自音声</option>
+                                </select>
+                                <button class="eva-btn btn-preview" type="button" onclick="previewNewSound()">試聴</button>
+                            </div>
+                            <div id="fileUploadArea" style="display:none;margin-top:6px;">
+                                <label class="sound-file-label">
+                                    音声選択 (WAV/MP3)
+                                    <input type="file" id="newSoundFile" accept=".wav,.mp3,audio/wav,audio/mpeg" onchange="onSoundFileSelected(this)">
+                                </label>
+                                <div class="sound-file-name" id="newSoundFileName"></div>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="eva-btn btn-add" onclick="addTimer()" style="width:100%;">時計追加</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="eva-footer">
+        複数時計系統 &mdash; 並列減算稼働中
+    </footer>
+
+    <script src="timer.js"></script>
+    <script>
+        startClock('clock');
+
+        const timers = [];
+        let timerCount = 0;
+        let pendingCustomFile = null;
+
+        function onSoundTypeChange() {
+            const type = document.getElementById('newSoundType').value;
+            document.getElementById('fileUploadArea').style.display = type === 'custom' ? 'block' : 'none';
+        }
+
+        function onSoundFileSelected(input) {
+            if (input.files.length > 0) {
+                pendingCustomFile = input.files[0];
+                document.getElementById('newSoundFileName').textContent = pendingCustomFile.name;
+            }
+        }
+
+        function previewNewSound() {
+            const type = document.getElementById('newSoundType').value;
+            const preview = new SoundManager();
+            if (type === 'custom' && pendingCustomFile) {
+                preview.loadCustomFile(pendingCustomFile);
+                setTimeout(() => preview.preview(), 300);
+            } else {
+                preview.setSoundType(type);
+                preview.preview();
+            }
+        }
+
+        function addTimer() {
+            const title = document.getElementById('newTitle').value || `時計 ${String(timerCount + 1).padStart(2, '0')}`;
+            const h = parseInt(document.getElementById('newHours').value) || 0;
+            const m = parseInt(document.getElementById('newMinutes').value) || 0;
+            const s = parseInt(document.getElementById('newSeconds').value) || 0;
+
+            if (h === 0 && m === 0 && s === 0) return;
+
+            timerCount++;
+            const id = generateId();
+            const sound = new SoundManager();
+            const selectedType = document.getElementById('newSoundType').value;
+            sound.setSoundType(selectedType);
+            if (selectedType === 'custom' && pendingCustomFile) {
+                sound.loadCustomFile(pendingCustomFile);
+            }
+
+            const card = document.createElement('div');
+            card.className = 'timer-card';
+            card.id = 'card_' + id;
+            card.innerHTML = `
+                <div class="timer-card-header">
+                    <span class="panel-title">${escapeHtml(title)}</span>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span class="panel-id">#${String(timerCount).padStart(2, '0')}</span>
+                        <div class="mute-toggle" id="mute_${id}" onclick="toggleMute('${id}')">
+                            <span class="mute-icon">🔊</span>
+                            <span>音声</span>
+                        </div>
+                        <button class="eva-btn btn-remove" onclick="removeTimer('${id}')">削除</button>
+                    </div>
+                </div>
+                <div class="timer-card-body">
+                    <div class="timer-display" id="display_${id}">${formatTimeAlwaysFull(h * 3600 + m * 60 + s)}</div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progress_${id}"></div>
+                    </div>
+                    <div class="btn-group" style="justify-content:center;">
+                        <button class="eva-btn btn-start" onclick="startTimer('${id}')">開始</button>
+                        <button class="eva-btn btn-stop" onclick="stopTimer('${id}')">停止</button>
+                        <button class="eva-btn btn-reset" onclick="resetTimer('${id}')">初期化</button>
+                    </div>
+                    <div class="status-line">
+                        <span>設定: ${formatTimeAlwaysFull(h * 3600 + m * 60 + s)}</span>
+                        <span id="status_${id}">待機中</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('timerList').appendChild(card);
+
+            const displayEl = document.getElementById('display_' + id);
+            const progressEl = document.getElementById('progress_' + id);
+            const statusEl = document.getElementById('status_' + id);
+
+            const timer = new TimerCore({
+                onTick(remaining, total) {
+                    displayEl.textContent = formatTimeAlwaysFull(remaining);
+                    updateTimerDisplayClass(displayEl, remaining, total);
+                    updateProgressBar(progressEl, remaining, total);
+                },
+                onFinish() {
+                    statusEl.textContent = '完了';
+                    sound.playAlarm();
+                },
+                onStart() {
+                    statusEl.textContent = '実行中';
+                    card.classList.add('active');
+                },
+                onStop() {
+                    card.classList.remove('active');
+                    if (!timer.finished) statusEl.textContent = '一時停止';
+                },
+                onReset() {
+                    statusEl.textContent = '待機中';
+                    displayEl.classList.remove('warning', 'danger', 'finished');
+                    progressEl.classList.remove('warning', 'danger');
+                    progressEl.style.width = '100%';
+                    card.classList.remove('active');
+                }
+            });
+
+            timer.setTime(h, m, s);
+            timers.push({ id, timer, sound });
+
+            document.getElementById('newTitle').value = '';
+        }
+
+        function startTimer(id) {
+            const t = timers.find(t => t.id === id);
+            if (t) t.timer.start();
+        }
+
+        function stopTimer(id) {
+            const t = timers.find(t => t.id === id);
+            if (t) t.timer.stop();
+        }
+
+        function resetTimer(id) {
+            const t = timers.find(t => t.id === id);
+            if (t) t.timer.reset();
+        }
+
+        function removeTimer(id) {
+            const idx = timers.findIndex(t => t.id === id);
+            if (idx > -1) {
+                timers[idx].timer.stop();
+                timers.splice(idx, 1);
+            }
+            const card = document.getElementById('card_' + id);
+            if (card) card.remove();
+        }
+
+        function toggleMute(id) {
+            const t = timers.find(t => t.id === id);
+            if (!t) return;
+            const muted = t.sound.toggleMute();
+            const el = document.getElementById('mute_' + id);
+            if (muted) {
+                el.classList.add('muted');
+                el.querySelector('.mute-icon').textContent = '🔇';
+                el.querySelector('span:last-child').textContent = '消音';
+            } else {
+                el.classList.remove('muted');
+                el.querySelector('.mute-icon').textContent = '🔊';
+                el.querySelector('span:last-child').textContent = '音声';
+            }
+        }
+
+        function startAll() { timers.forEach(t => t.timer.start()); }
+        function stopAll() { timers.forEach(t => t.timer.stop()); }
+        function resetAll() { timers.forEach(t => t.timer.reset()); }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
